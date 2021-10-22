@@ -29,7 +29,9 @@ enum stack_error_code{
     STACK_ERROR_DATA_LEFT_SHIELD,
     STACK_ERROR_DATA_RIGHT_SHIELD,
     STACK_ERROR_DATA_HASH,
-    STACK_ERROR_HASH
+    STACK_ERROR_HASH,
+    STACK_ERROR_CONSTRUCTED,
+    STACK_ERROR_DESTRUCTED
 };
 
 extern const char* stack_error_name[];
@@ -50,7 +52,7 @@ struct stack_t{
     #endif // SECOND_LEVEL
 
     elemen_t *data;
-    int capacity;
+    int capacity = -1;
     int size;
 
     #ifndef ZERO_LEVEL

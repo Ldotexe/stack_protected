@@ -2,20 +2,21 @@
 #include <stdlib.h>
 #include <string.h>
 #include "stack_functions.h"
-//#if defined (ZERO_LEVEL) || defined (FIRST_LEVEL) || defined (SECOND_LEVEL)
+#if defined (ZERO_LEVEL) || defined (FIRST_LEVEL) || defined (SECOND_LEVEL)
 
 int main()
 {
     struct stack_t stack;
     stack_ctor(&stack, 0);
     for (int i = 0; i < 1000; i++){
-        stack_push(&stack, i * 1007);
+        stack_push(&stack, i);
     }
     while(stack.size){
         printf("was: %d size = %d\n", stack_pop(&stack), stack.size);
     }
     stack_dtor(&stack);
+    printf("!End\n");
     return 0;
 }
 
-//#endif
+#endif
