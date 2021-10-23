@@ -31,7 +31,8 @@ enum stack_error_code{
     STACK_ERROR_DATA_HASH,
     STACK_ERROR_HASH,
     STACK_ERROR_CONSTRUCTED,
-    STACK_ERROR_DESTRUCTED
+    STACK_ERROR_DESTRUCTED,
+    STACK_ERROR_FILE
 };
 
 extern const char* stack_error_name[];
@@ -40,6 +41,7 @@ extern const char* stack_error_name[];
 const shield_t shield_value = 0xA1ECCE1BAD1DEADA;
 
 extern const elemen_t stack_poison;
+extern const int reducing_capacity;
 
 struct stack_t{
     #ifndef ZERO_LEVEL
@@ -63,11 +65,13 @@ struct stack_t{
 stack_error_code stack_error (struct stack_t *stack);
 stack_error_code stack_ctor (struct stack_t *stack, int capacity);
 stack_error_code stack_dtor (struct stack_t *stack);
-stack_error_code stack_resize (struct stack_t *stack, int new_capacity);
-stack_error_code stack_push (struct stack_t *stack, int value);
-int stack_pop (struct stack_t *stack);
+stack_error_code stack_resize_more(struct stack_t *stack);
+int optimal_resize_more(int capacity);
+stack_error_code stack_resize_less(struct stack_t *stack);
+stack_error_code stack_push (struct stack_t *stack, elemen_t value);
+elemen_t stack_pop (struct stack_t *stack);
 hash_t stack_hash (char* buffer, long long size);
 stack_error_code update_hash (struct stack_t *stack);
-
+int stack_dump (struct stack_t *stack, const char* file, const char* function, const int line);
 
 #endif// STACK_FUNCTIONS_H_INCLUDED
