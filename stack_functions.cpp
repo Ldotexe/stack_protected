@@ -289,7 +289,7 @@ stack_error_code update_hash(struct stack_t *stack){
     stack->data_hash = 0;
     stack->data_hash = stack_hash((char*) stack->data, stack->size * sizeof(elemen_t));
     stack->hash = 0;
-    stack->hash = stack_hash((char*)stack, 2 * sizeof(shield_t) + 2 * sizeof(hash_t) + sizeof(elemen_t*) + 2 * sizeof(int) );
+    stack->hash = stack_hash((char*)stack, 2 * sizeof(shield_t) + 2 * sizeof(hash_t) + sizeof(elemen_t*) + 2 * sizeof(int) + sizeof(int));
     //printf("%u %u\n", stack->data_hash, stack->hash);
     return STACK_ERROR_OK;
 }

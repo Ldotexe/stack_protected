@@ -56,7 +56,7 @@ struct stack_t{
     elemen_t *data;
     int capacity = -1;
     int size = -1;
-    int ilp = 0x100B;
+    int extracheck = 0xBADAB0BA;
     #ifndef ZERO_LEVEL
         shield_t right_shield = shield_value;
     #endif // ZERO_LEVEL

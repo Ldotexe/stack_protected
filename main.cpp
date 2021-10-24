@@ -28,7 +28,6 @@ int main()
             return 0;
         }
     }
-    printf("!Pushed\n");
     while(stack.size){
         printf("was: %.0f size = %d\n", stack_pop(&stack), stack.size);
     }
