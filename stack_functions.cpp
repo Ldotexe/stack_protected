@@ -23,14 +23,14 @@ const char* stack_error_name[] = {
     "STACK_ERROR_FILE"
 };
 
-const elemen_t stack_poison = NAN;
+const elemen_t stack_poison = -666.200066666;
 const int reducing_capacity = 2;
 
 stack_error_code stack_error (struct stack_t *stack){
     if (!stack){
         return STACK_ERROR_NO_POINTER;
     }
-    if (stack->size >= stack->capacity){
+    if (stack->size > stack->capacity){
         return STACK_ERROR_CAPACITY_LESS_SIZE;
     }
     if (stack->capacity < 0){
@@ -52,7 +52,7 @@ stack_error_code stack_error (struct stack_t *stack){
         if ( ((shield_t*)((char*)stack->data - sizeof(shield_t)))[0] != shield_value){
             return STACK_ERROR_DATA_LEFT_SHIELD;
         }
-        if ( ((shield_t*)((char*)stack->data + stack->capacity * sizeof(elemen_t)))[0] != shield_value){
+        if ( ((shield_t*)((char*)(stack->data + stack->capacity)))[0] != shield_value){
             return STACK_ERROR_DATA_RIGHT_SHIELD;
         }
     #endif // ZERO_LEVEL
@@ -64,18 +64,20 @@ stack_error_code stack_error (struct stack_t *stack){
         stack->hash = 0;
         update_hash(stack);
         if (stack->data_hash != rem_data_hash){
+            stack->hash = rem_hash;
+            stack->data_hash = rem_data_hash;
             return STACK_ERROR_DATA_HASH;
         }
         if (stack->hash != rem_hash){
+            stack->hash = rem_hash;
+            stack->data_hash = rem_data_hash;
             return STACK_ERROR_HASH;
         }
     #endif // SECOND_LEVEL
     return STACK_ERROR_OK;
 }
 
-#ifndef ZERO_LEVEL
-
-stack_error_code shield_wall(struct stack_t *stack){
+stack_error_code shield_wall (struct stack_t *stack){
     if (!stack){
         return STACK_ERROR_NO_POINTER;
     }
@@ -85,9 +87,6 @@ stack_error_code shield_wall(struct stack_t *stack){
     return STACK_ERROR_OK;
 }
 
-#endif // ZERO_LEVEL
-
-
 stack_error_code stack_ctor (struct stack_t *stack, int capacity){
     if (stack == NULL){
         return STACK_ERROR_NO_POINTER;
@@ -95,7 +94,7 @@ stack_error_code stack_ctor (struct stack_t *stack, int capacity){
     if (capacity < 0){
         return STACK_ERROR_CAPACITY_LESS_ZERO;
     }
-    if (stack->capacity > 0){
+    if (stack->capacity >= 0){
         return STACK_ERROR_CONSTRUCTED;
     }
     #ifdef ZERO_LEVEL
@@ -104,17 +103,19 @@ stack_error_code stack_ctor (struct stack_t *stack, int capacity){
 
     #else
 
-        stack->data = (elemen_t*)calloc(1, capacity * sizeof(elemen_t) + 2 * sizeof(shield_t));
-        shield_wall(stack);
+        stack->data = (elemen_t*)calloc(1, sizeof(shield_t) + capacity * sizeof(elemen_t) + sizeof(shield_t));
+
 
     #endif // ZERO_LEVEL
 
-    if (stack->data == 0){
+
+    if (stack->data == nullptr){
         return STACK_ERROR_NO_MEMORY;
     }
     stack->capacity = capacity;
     #ifndef ZERO_LEVEL
 
+        shield_wall(stack);
         stack->left_shield = shield_value;
         stack->right_shield = shield_value;
 
@@ -128,10 +129,10 @@ stack_error_code stack_ctor (struct stack_t *stack, int capacity){
 
     #endif // SECOND_LEVEL
 
-    return STACK_ERROR_OK;
+    return check_stack_here(stack);
 }
 
-stack_error_code stack_dtor(struct stack_t *stack){
+stack_error_code stack_dtor (struct stack_t *stack){
     if(stack == NULL){
         return STACK_ERROR_NO_POINTER;
     }
@@ -139,7 +140,7 @@ stack_error_code stack_dtor(struct stack_t *stack){
         return STACK_ERROR_DESTRUCTED;
     }
     free(stack->data);
-    stack->data = 0;
+    stack->data = nullptr;
     stack->capacity = -1;
     stack->size = -1;
     #ifdef SECOND_LEVEL
@@ -151,6 +152,9 @@ stack_error_code stack_dtor(struct stack_t *stack){
 }
 
 stack_error_code stack_resize_more (struct stack_t *stack){
+    if (check_stack_here(stack) != STACK_ERROR_OK){
+        return check_stack_here(stack);
+    }
     int new_capacity = 0;
     if (stack->capacity <= 0){
         new_capacity = 1;
@@ -182,8 +186,7 @@ stack_error_code stack_resize_more (struct stack_t *stack){
         update_hash(stack);
 
     #endif // SECOND_LEVEL
-    printf("Resizing memory old: %d new: %d\n", stack->capacity, new_capacity);
-    return STACK_ERROR_OK;
+    return check_stack_here(stack);
 }
 
 int optimal_resize_more (int capacity){
@@ -199,7 +202,10 @@ int optimal_resize_more (int capacity){
     return capacity + 5000;
 }
 
-stack_error_code stack_resize_less(struct stack_t *stack){
+stack_error_code stack_resize_less (struct stack_t *stack){
+    if (check_stack_here(stack) != STACK_ERROR_OK){
+        return check_stack_here(stack);
+    }
     int new_capacity = 0;
     if((stack->size) * (reducing_capacity * 2) <= stack->capacity){
         new_capacity = stack->capacity / reducing_capacity;
@@ -225,24 +231,23 @@ stack_error_code stack_resize_less(struct stack_t *stack){
         update_hash(stack);
     #endif // SECOND_LEVEL
 
-    printf("Resizing memory old: %d new: %d\n", stack->capacity, new_capacity);
-    return STACK_ERROR_OK;
+    return check_stack_here(stack);
 }
 
-stack_error_code stack_push(struct stack_t *stack, elemen_t value){
-    if(stack == NULL){
-        return STACK_ERROR_NO_POINTER;
+stack_error_code stack_push (struct stack_t *stack, elemen_t value){
+    if(check_stack_here(stack) != STACK_ERROR_OK){
+        return check_stack_here(stack);
     }
     stack_resize_more(stack);
     stack->data[stack->size++] = value;
     #ifdef SECOND_LEVEL
         update_hash(stack);
     #endif // SECOND_LEVEL
-    return STACK_ERROR_OK;
+    return check_stack_here(stack);
 }
 
-elemen_t stack_pop(struct stack_t *stack){
-    if (stack->size <= 0){
+elemen_t stack_pop (struct stack_t *stack){
+    if (check_stack_here(stack) != STACK_ERROR_OK){
         return stack_poison;
     }
     stack_resize_less(stack);
@@ -274,6 +279,8 @@ hash_t stack_hash(char* buffer, long long size){
 	return answer;
 }
 
+#ifdef SECOND_LEVEL
+
 stack_error_code update_hash(struct stack_t *stack){
     if(!stack){
         return STACK_ERROR_NO_POINTER;
@@ -286,6 +293,8 @@ stack_error_code update_hash(struct stack_t *stack){
     //printf("%u %u\n", stack->data_hash, stack->hash);
     return STACK_ERROR_OK;
 }
+
+#endif // SECOND_LEVEL
 
 stack_error_code check_stack (struct stack_t *stack, const char* file, const char* function, const int line){
     if (stack_error(stack) != STACK_ERROR_OK){
@@ -312,30 +321,37 @@ int stack_dump (struct stack_t *stack, const char* file, const char* function, c
          fprintf (stack_error_data, "SECOND level of protection, with shields and hash\n\n");
     #endif
 
-    fprintf (stack_error_data,  "stack <%s> Have %s at %s at (%s:%d) \n\n", typeid(stack).name(), stack_error_name[stack_error(stack)], file, function, line);
+    fprintf (stack_error_data, "stack <%s> Have %s at %s in (function: %s | line: %d) \n\n", typeid(stack).name(), stack_error_name[stack_error(stack)], file, function, line);
 
     if (stack->data != 0){
-        fprintf (stack_error_data, "Capacity = %d\n" "Size = %d\n" "Pointer of data <%s> = %p\n\n",
+        fprintf (stack_error_data,
+                 "Capacity = %d\n"
+                 "Size = %d\n"
+                 "Pointer of data <%s> = %p\n\n",
                   stack->capacity, stack->size, typeid(*(stack->data)).name(), stack->data);
         #ifdef SECOND_LEVEL
 
-                fprintf (stack_error_data, "hash = %lld, data_hash = %lld\n", stack->hash, stack->data_hash);
+                fprintf (stack_error_data, "hash = %llu, data_hash = %llu\n", stack->hash, stack->data_hash);
         #endif
 
         #ifndef ZERO_LEVEL
 
             fprintf (stack_error_data,
-                    "left_shield = %llx\n" "right_shield = %llx\n"
-                    "left_data_shield = %llx\n" "right_data_shield = %llx\n\n",
+                    "left_shield       = %llx\n"
+                    "right_shield      = %llx\n"
+                    "left_data_shield  = %llx\n"
+                    "right_data_shield = %llx\n\n",
                     stack->left_shield, stack->right_shield,
                     ((shield_t*)((char*)stack->data - sizeof(shield_t)))[0],
                     ((shield_t*)((char*)stack->data + stack->capacity * sizeof(elemen_t)))[0]);
         #endif // ZERO_LEVEL
     }
-
+    fprintf(stack_error_data, "data values:\n");
     for (int i = 0; i < stack->size; i++){
         fprintf (stack_error_data, "  data[%d] = %f \n", i, stack->data[i]);
     }
+
+    fprintf(stack_error_data, "That's it...\n");
 
     fclose (stack_error_data);
 
